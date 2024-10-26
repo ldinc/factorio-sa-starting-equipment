@@ -26,9 +26,20 @@ function check_starting_equipment(player)
 end
 
 function remove_starting_items(player)
-	player.remove_item { name = "burner-mining-drill", count = 1 }
-	player.remove_item { name = "stone-furnace", count = 5 }
-	player.remove_item { name = "wood", count = 200 }
+	local input = settings.startup["freeplay_starting_equipment_drop_list"].value
+
+	if input ~= '' then
+
+		for name, v in string.gmatch(input, "([%w%-]+)=(%d+)") do
+			local count = tonumber(v)
+			local success, result = pcall(function() player.remove_item { name = name, count = count } end)
+
+			if success == false then
+				log("freeplay_starting_equipment:: invalid item in settings for drop items: " ..
+					name .. " count: " .. tostring(count) .. " error: " .. tostring(result))
+			end
+		end
+	end
 end
 
 function items_from_settings(player)

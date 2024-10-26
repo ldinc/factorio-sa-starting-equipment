@@ -1,6 +1,6 @@
 local equipment = require('lib.script.equipment')
 
-local function on_cutscene_cancelled(player_id)
+local function handle_player(player_id)
 	local player = game.get_player(player_id)
 
 	if player then
@@ -11,14 +11,21 @@ end
 script.on_event(
 	defines.events.on_cutscene_cancelled,
 	function(event)
-		on_cutscene_cancelled(event.player_index)
+		handle_player(event.player_index)
 	end
 )
 
 script.on_event(
 	defines.events.on_cutscene_finished,
 	function (event)
-		-- using same handler
-		on_cutscene_cancelled(event.player_index)
+		handle_player(event.player_index)
+	end
+)
+
+
+script.on_event(
+	defines.events.on_player_created,
+	function (event)
+		handle_player(event.player_index)
 	end
 )
