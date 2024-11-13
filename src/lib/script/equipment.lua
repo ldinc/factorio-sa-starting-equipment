@@ -1,62 +1,42 @@
-local equipment_script = {}
+require('lib.script.items')
+require('lib.script.settings')
 
-function equipment_script.check_starting_equipment(player)
-	check_starting_equipment(player)
-end
+---@param player LuaPlayer
+function ldinc_starting_equipment.fn.check_starting_equipment(player)
+	local items = ldinc_starting_equipment.fn.get_default()
 
-function check_starting_equipment(player)
-	local success = player.insert { name = "wood", count = 1 } > 0
-
-	if success then
-		-- usualy for multiplayer game it works
-		remove_starting_items(player)
-		items_from_settings(player)
-	else
-		local inventory = player.get_inventory(defines.inventory.character_main)
-
-		if inventory == nil then
-			inventory = player.get_inventory(defines.inventory.god_main)
+	if not ldinc_starting_equipment.fn.settings_ignore_others() then
+		if not ldinc_starting_equipment.fn.settings_append_default_to_others() then
+			items = {}
 		end
 
-		if inventory then
-			remove_starting_items(inventory)
-			items_from_settings(inventory)
-		end
-	end
-end
-
-function remove_starting_items(player)
-	local input = settings.startup["freeplay_starting_equipment_drop_list"].value
-
-	if input ~= '' then
-
-		for name, v in string.gmatch(input, "([%w%-]+)=(%d+)") do
-			local count = tonumber(v)
-			local success, result = pcall(function() player.remove_item { name = name, count = count } end)
-
-			if success == false then
-				log("freeplay_starting_equipment:: invalid item in settings for drop items: " ..
-					name .. " count: " .. tostring(count) .. " error: " .. tostring(result))
+		for _, external in pairs(ldinc_starting_equipment.additional) do
+			for _, item in ipairs(external) do
+				table.insert(items, item)
 			end
 		end
 	end
-end
 
-function items_from_settings(player)
-	local input = settings.startup["freeplay_starting_equipment_list"].value
 
-	if input ~= '' then
-
-		for name, v in string.gmatch(input, "([%w%-]+)=(%d+)") do
-			local count = tonumber(v)
-			local success, result = pcall(function() player.insert { name = name, count = count } end)
-
-			if success == false then
-				log("freeplay_starting_equipment:: invalid item in settings for starting items: " ..
-					name .. " count: " .. tostring(count) .. " error: " .. tostring(result))
-			end
+	for _, item in ipairs(items) do
+		if not item then
+			goto continue
 		end
+
+		local success, err = pcall(function()
+			player.insert(item)
+		end)
+
+		if not success then
+			local err_string = "invalid item key"
+
+			if type(err) == "string" then
+				err_string = err
+			end
+
+			log("Invalid item '" .. item.name .. "' was ignored to add as starting equipment with error: " .. err_string)
+		end
+
+		::continue::
 	end
 end
-
-return equipment_script
