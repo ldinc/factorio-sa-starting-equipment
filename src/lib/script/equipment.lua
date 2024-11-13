@@ -5,7 +5,7 @@ require('lib.script.settings')
 function ldinc_starting_equipment.fn.check_starting_equipment(player)
 	local items = ldinc_starting_equipment.fn.get_default()
 
-	if not ldinc_starting_equipment.fn.settings_ignore_others() then
+	if not ldinc_starting_equipment.fn.settings_ignore_others() and #ldinc_starting_equipment.additional > 0 then
 		if not ldinc_starting_equipment.fn.settings_append_default_to_others() then
 			items = {}
 		end

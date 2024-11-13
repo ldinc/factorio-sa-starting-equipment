@@ -1,10 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.1
+Date: 13. 11. 2024
+  Fix:
+    - Missing default environment
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 13. 11. 2024
   Changed:
     - Internal refactoring
   Added:
-    - Remote call interface for ineractive from other mods
+    - Remote call interface for communication from other mods
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 28. 10. 2024
