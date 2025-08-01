@@ -6,19 +6,19 @@ require('lib.script.settings')
 ---@type data.EquipmentPrototype
 
 ---@param str string
----@return SimpleItemStack[]
+---@return ItemStackDefinition[]
 function ldinc_starting_equipment.fn.get_items_from_string(str)
 	if #str == 0 or str == '' then
 		return {}
 	end
 
-	---@type SimpleItemStack[]
+	---@type ItemStackDefinition[]
 	local list = {}
 
 	for name, v in string.gmatch(str, "([%w%-]+)=(%d+)") do
 		local count = tonumber(v)
 
-		---@type SimpleItemStack
+		---@type ItemStackDefinition
 		local item = {
 			name = name,
 			count = count,
@@ -30,7 +30,7 @@ function ldinc_starting_equipment.fn.get_items_from_string(str)
 	return list
 end
 
----@return SimpleItemStack[]
+---@return ItemStackDefinition[]
 function ldinc_starting_equipment.fn.get_default()
 	local items_string = ldinc_starting_equipment.fn.settings_equipment_list()
 
@@ -44,7 +44,7 @@ function ldinc_starting_equipment.fn.external_add_items_by_string(mod_name, item
 end
 
 ---@param mod_name string
----@param items SimpleItemStack[]
+---@param items ItemStackDefinition[]
 function ldinc_starting_equipment.fn.external_add_items(mod_name, items)
 	ldinc_starting_equipment.additional[mod_name] = items
 end

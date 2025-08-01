@@ -2,14 +2,13 @@
     "factorio.versions": [
         {
             "name": "spaceage",
-            "factorioPath": "d:\\Games\\Factorio\\bin\\x64\\factorio.exe",
-            "active": true
+            "factorioPath": "d:\\Games\\Factorio\\bin\\x64\\factorio.exe"
         }
     ],
     "Lua.workspace.userThirdParty": [
-        "c:\\Users\\ldinc\\AppData\\Roaming\\Code\\User\\workspaceStorage\\1b6a55f1f1e6067e708c329a96b00430\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
+        "c:\\Users\\drogu\\AppData\\Roaming\\Code\\User\\workspaceStorage\\280bc8a350f92f897a0441fe4c29468a\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
     ],
     "Lua.workspace.checkThirdParty": "ApplyInMemory",
     "editor.useTabStops": true,
-    "editor.tabSize": 2 
+    "editor.tabSize": 2
 }

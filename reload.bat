@@ -1,9 +1,14 @@
-call build.bat
+@echo off
 
-for /f "tokens=* delims=" %%# in ('jq -r ".factorio" build.config.json') do @(set target=%%#)
+set "branch=stable"
 
-echo copy to %target%
-move %modname%_%version%.zip %target%mods\
+if /i "%target%"=="unstable" (
+  set "branch=unstable"
+)
 
-@REM @REM start steam://rungameid/427520
-call %target%bin\x64\factorio.exe
+set "mp=.factorio.%branch%"
+for /f "tokens=* delims=" %%# in ('jq -r "%mp%" build.config.json') do set "target=%%#"
+
+goft.exe -b -o "%target%mods\\"
+
+call "%target%bin\x64\factorio.exe"

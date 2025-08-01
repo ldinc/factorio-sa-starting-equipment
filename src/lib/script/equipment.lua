@@ -1,8 +1,39 @@
 require('lib.script.items')
 require('lib.script.settings')
 
+function ldinc_starting_equipment.fn.on_init()
+	if not storage.ldinc then storage.ldinc = {} end
+
+	if not storage.ldinc.starting_equipment then storage.ldinc.starting_equipment = {} end
+	if not storage.ldinc.starting_equipment.has then storage.ldinc.starting_equipment.has = {} end
+end
+
+function ldinc_starting_equipment.fn.on_load()
+	-- ldinc_starting_equipment.fn.on_init()
+end
+
+function ldinc_starting_equipment.fn.on_update()
+	ldinc_starting_equipment.fn.on_init()
+end
+
+---@param player_index integer
+function ldinc_starting_equipment.fn.on_player_removed(player_index)
+	storage.ldinc.starting_equipment.has[player_index] = false
+end
+
+---@param player_index integer
+function ldinc_starting_equipment.fn.on_player_removed_has_equipment(player_index)
+	storage.ldinc.starting_equipment.has[player_index] = true
+end
+
 ---@param player LuaPlayer
 function ldinc_starting_equipment.fn.check_starting_equipment(player)
+	local state = storage.ldinc.starting_equipment.has[player.index]
+
+	if state == true then
+		return
+	end
+
 	local items = ldinc_starting_equipment.fn.get_default()
 	local additional_len = 0
 
@@ -45,4 +76,6 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player)
 
 		::continue::
 	end
+
+	ldinc_starting_equipment.fn.on_player_removed_has_equipment(player.index)
 end

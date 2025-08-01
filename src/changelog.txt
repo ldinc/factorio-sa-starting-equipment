@@ -1,31 +1,35 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.4
+Date: 02. 08. 2025
+  Changes:
+    - Added map for issued equipments per player (compatability with trainsaver)
+---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: 14. 11. 2024
-  Fix:
+  Bugfixes:
     - Lua remote API
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 13. 11. 2024
-  Fix:
+  Bugfixes:
     - Missing default environment
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 13. 11. 2024
-  Changed:
+  Changes:
     - Internal refactoring
-  Added:
-    - Remote call interface for communication from other mods
+    - Added: Remote call interface for communication from other mods
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 28. 10. 2024
-  Changed:
-    - Delete space age as dependency
+  Changes:
+    - Deleted: Mod "space-age" as dependency
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 27. 10. 2024
-  Added:
-    - Drop list for default base game items
+  Changes:
+    - Added: Drop list for default base game items
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 27. 10. 2024

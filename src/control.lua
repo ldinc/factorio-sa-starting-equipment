@@ -19,6 +19,25 @@ local function handle_player(player_id)
 	end
 end
 
+script.on_init(
+	ldinc_starting_equipment.fn.on_init
+)
+
+script.on_load(
+	ldinc_starting_equipment.fn.on_load
+)
+
+script.on_configuration_changed(
+	ldinc_starting_equipment.fn.on_update
+)
+
+script.on_event(
+	defines.events.on_player_removed,
+	function(event)
+		ldinc_starting_equipment.fn.on_player_removed(event.player_index)
+	end
+)
+
 script.on_event(
 	defines.events.on_cutscene_cancelled,
 	function(event)
@@ -28,14 +47,14 @@ script.on_event(
 
 script.on_event(
 	defines.events.on_cutscene_finished,
-	function (event)
+	function(event)
 		handle_player(event.player_index)
 	end
 )
 
 script.on_event(
 	defines.events.on_player_created,
-	function (event)
+	function(event)
 		handle_player(event.player_index)
 	end
 )
