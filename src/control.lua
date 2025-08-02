@@ -69,7 +69,7 @@ script.on_event(
 )
 
 script.on_nth_tick(
-	360,
+	120,
 	ldinc_starting_equipment.fn.game_tick
 )
 
