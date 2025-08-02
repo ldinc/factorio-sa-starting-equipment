@@ -6,19 +6,6 @@ require('lib.script.equipment')
 require('lib.script.items')
 require('lib.script.settings')
 
-
-local function handle_player(player_id)
-	local player = game.get_player(player_id)
-
-	if player then
-		local player = game.get_player(player_id)
-
-		if player then
-			ldinc_starting_equipment.fn.check_starting_equipment(player)
-		end
-	end
-end
-
 script.on_init(
 	ldinc_starting_equipment.fn.on_init
 )
