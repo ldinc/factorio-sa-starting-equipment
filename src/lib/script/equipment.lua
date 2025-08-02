@@ -6,6 +6,7 @@ function ldinc_starting_equipment.fn.on_init()
 
 	if not storage.ldinc.starting_equipment then storage.ldinc.starting_equipment = {} end
 	if not storage.ldinc.starting_equipment.has then storage.ldinc.starting_equipment.has = {} end
+	if not storage.ldinc.starting_equipment.queue then storage.ldinc.starting_equipment.queue = {} end
 end
 
 function ldinc_starting_equipment.fn.on_load()
@@ -18,19 +19,54 @@ end
 
 ---@param player_index integer
 function ldinc_starting_equipment.fn.on_player_removed(player_index)
-	storage.ldinc.starting_equipment.has[player_index] = false
+	storage.ldinc.starting_equipment.has[player_index] = nil
 end
 
 ---@param player_index integer
-function ldinc_starting_equipment.fn.on_player_removed_has_equipment(player_index)
+function ldinc_starting_equipment.fn.equipment_was_added(player_index)
 	storage.ldinc.starting_equipment.has[player_index] = true
+
+	ldinc_starting_equipment.fn.remove_from_queue(player_index)
 end
 
----@param player LuaPlayer
-function ldinc_starting_equipment.fn.check_starting_equipment(player)
-	local state = storage.ldinc.starting_equipment.has[player.index]
+---@param player_index integer
+function ldinc_starting_equipment.fn.add_to_queue(player_index)
+	storage.ldinc.starting_equipment.queue[player_index] = false
+end
+
+---@param player_index integer
+function ldinc_starting_equipment.fn.remove_from_queue(player_index)
+	storage.ldinc.starting_equipment.queue[player_index] = nil
+end
+
+function ldinc_starting_equipment.fn.game_tick()
+	if #storage.ldinc.starting_equipment.queue == 0 then
+		return
+	end
+
+	for player_index, _ in pairs(storage.ldinc.starting_equipment.queue) do
+		ldinc_starting_equipment.fn.check_starting_equipment(player_index)
+	end
+end
+
+---@param player_index integer
+function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
+	local state = storage.ldinc.starting_equipment.has[player_index]
 
 	if state == true then
+		return
+	end
+
+	local player = game.get_player(player_index)
+
+	if player == nil then
+		ldinc_starting_equipment.fn.remove_from_queue(player_index)
+
+		return
+	end
+
+	local main_inventory = player.get_main_inventory()
+	if main_inventory == nil then
 		return
 	end
 
@@ -77,5 +113,5 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player)
 		::continue::
 	end
 
-	ldinc_starting_equipment.fn.on_player_removed_has_equipment(player.index)
+	ldinc_starting_equipment.fn.equipment_was_added(player_index)
 end
