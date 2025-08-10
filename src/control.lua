@@ -1,6 +1,5 @@
 if ldinc_starting_equipment == nil then ldinc_starting_equipment = {} end
 if ldinc_starting_equipment.fn == nil then ldinc_starting_equipment.fn = {} end
-if ldinc_starting_equipment.additional == nil then ldinc_starting_equipment.additional = {} end
 
 require('lib.script.equipment')
 require('lib.script.items')
@@ -32,21 +31,6 @@ script.on_event(
 	end
 )
 
--- script.on_event(
--- 	defines.events.on_cutscene_cancelled,
--- 	function(event)
--- 		-- handle_player(event.player_index)
--- 		ldinc_starting_equipment.fn.add_to_queue(event.player_index)
--- 	end
--- )
-
--- script.on_event(
--- 	defines.events.on_cutscene_finished,
--- 	function(event)
--- 		handle_player(event.player_index)
--- 	end
--- )
-
 script.on_event(
 	defines.events.on_player_created,
 	function(event)
@@ -56,7 +40,7 @@ script.on_event(
 )
 
 script.on_nth_tick(
-	120,
+	200,
 	ldinc_starting_equipment.fn.game_tick
 )
 

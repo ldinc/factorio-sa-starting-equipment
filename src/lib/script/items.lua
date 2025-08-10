@@ -40,11 +40,16 @@ end
 ---@param mod_name string
 ---@param items_string string
 function ldinc_starting_equipment.fn.external_add_items_by_string(mod_name, items_string)
-	ldinc_starting_equipment.additional[mod_name] = ldinc_starting_equipment.fn.get_items_from_string(items_string)
+	if storage.ldinc.starting_equipment.additional[mod_name] then
+		storage.ldinc.starting_equipment.additional[mod_name] = ldinc_starting_equipment.fn.get_items_from_string(
+		items_string)
+	end
 end
 
 ---@param mod_name string
 ---@param items ItemStackDefinition[]
 function ldinc_starting_equipment.fn.external_add_items(mod_name, items)
-	ldinc_starting_equipment.additional[mod_name] = items
+	if not storage.ldinc.starting_equipment.additional[mod_name] then
+		storage.ldinc.starting_equipment.additional[mod_name] = items
+	end
 end

@@ -7,6 +7,7 @@ function ldinc_starting_equipment.fn.on_init()
 	if not storage.ldinc.starting_equipment then storage.ldinc.starting_equipment = {} end
 	if not storage.ldinc.starting_equipment.has then storage.ldinc.starting_equipment.has = {} end
 	if not storage.ldinc.starting_equipment.queue then storage.ldinc.starting_equipment.queue = {} end
+	if not storage.ldinc.starting_equipment.additional then storage.ldinc.starting_equipment.additional = {} end
 end
 
 function ldinc_starting_equipment.fn.on_load()
@@ -73,7 +74,7 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 	local items = ldinc_starting_equipment.fn.get_default()
 	local additional_len = 0
 
-	for _ in pairs(ldinc_starting_equipment.additional) do
+	for _ in pairs(storage.ldinc.starting_equipment.additional) do
 		additional_len = additional_len + 1
 	end
 
@@ -83,7 +84,7 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 			items = {}
 		end
 
-		for _, external in pairs(ldinc_starting_equipment.additional) do
+		for _, external in pairs(storage.ldinc.starting_equipment.additional) do
 			for _, item in ipairs(external) do
 				table.insert(items, item)
 			end
