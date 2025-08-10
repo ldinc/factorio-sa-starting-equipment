@@ -74,6 +74,10 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 	local items = ldinc_starting_equipment.fn.get_default()
 	local additional_len = 0
 
+	if not storage.ldinc.starting_equipment.additional then
+		storage.ldinc.starting_equipment.additional = {}
+	end
+
 	for _ in pairs(storage.ldinc.starting_equipment.additional) do
 		additional_len = additional_len + 1
 	end
