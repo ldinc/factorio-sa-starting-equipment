@@ -12,19 +12,41 @@ function ldinc_starting_equipment.fn.get_items_from_string(str)
 		return {}
 	end
 
-	---@type ItemStackDefinition[]
 	local list = {}
 
-	for name, v in string.gmatch(str, "([%w%-]+)=(%d+)") do
-		local count = tonumber(v)
+	for entry in string.gmatch(str, "[^%s]+") do
+		local quality, name, count_str
 
-		---@type ItemStackDefinition
+		quality, name, count_str = string.match(entry, "([%w%-]+)::([%w%-]+)=(%d+)")
+
+		if not quality then
+			name, count_str = string.match(entry, "([%w%-]+)=(%d+)")
+		end
+
+		if not name or not count_str then
+			log("string \"" .. str .. "\" has invalid format")
+
+			goto continue
+		end
+
+		local count = tonumber(count_str)
+
+		if not count then
+			goto continue
+		end
+
 		local item = {
 			name = name,
 			count = count,
 		}
 
+		if quality then
+			item.quality = quality
+		end
+
 		table.insert(list, item)
+
+		::continue::
 	end
 
 	return list
@@ -42,7 +64,7 @@ end
 function ldinc_starting_equipment.fn.external_add_items_by_string(mod_name, items_string)
 	if storage.ldinc.starting_equipment.additional[mod_name] then
 		storage.ldinc.starting_equipment.additional[mod_name] = ldinc_starting_equipment.fn.get_items_from_string(
-		items_string)
+			items_string)
 	end
 end
 
