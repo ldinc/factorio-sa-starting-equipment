@@ -1,1 +1,1 @@
-goft.exe -b
+goft.exe -b -x tests

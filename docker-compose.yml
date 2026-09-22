@@ -1,0 +1,26 @@
+# In-game tests for freeplay_starting_equipment, run in headless Factorio.
+#   docker compose build
+#   docker compose run --rm tests                                  # all headless tests
+#   docker compose run --rm tests --tag-blacklist needs-player --bail   # custom CLI flags
+#   docker compose run --rm tests --tag-blacklist needs-player -- "give_items"   # filter by name
+# Versions can be overridden with env vars or a .env file next to this file.
+name: freeplay-starting-equipment-tests
+
+services:
+  tests:
+    build:
+      context: ./docker
+      args:
+        FACTORIO_VERSION: ${FACTORIO_VERSION:-2.1.20}
+        FACTORIO_TEST_CLI_VERSION: ${FACTORIO_TEST_CLI_VERSION:-3.6.0}
+    image: factorio-mod-tests:${FACTORIO_VERSION:-2.1.20}
+    # Factorio headless is x86-64 only; ARM hosts (Snapdragon laptops, Apple Silicon) run it emulated.
+    platform: linux/amd64
+    volumes:
+      # mod folder with info.json; run-tests.ps1 sets MOD_DIR from -ModDir.
+      # create_host_path: false -> a missing/unshared folder is an error instead of an empty /mod.
+      - type: bind
+        source: ${MOD_DIR:-./src}
+        target: /mod
+        bind:
+          create_host_path: false

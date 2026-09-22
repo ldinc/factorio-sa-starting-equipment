@@ -48,3 +48,17 @@ remote.add_interface("ldinc_starting_equipment", {
 	add_list = ldinc_starting_equipment.fn.external_add_items,
 	add_by_string = ldinc_starting_equipment.fn.external_add_items_by_string,
 })
+
+
+-- In-game tests (FactorioTest). Only active when the factorio-test mod is enabled,
+-- which never happens for normal players. See tests/ and run-tests.ps1.
+if script.active_mods["factorio-test"] then
+	require("__factorio-test__/init")({
+		"tests/items_test",
+		"tests/remote_test",
+		"tests/equipment_test",
+		"tests/player_test",
+	}, {
+		load_luassert = true,
+	})
+end

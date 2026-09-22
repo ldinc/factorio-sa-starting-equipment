@@ -2,3 +2,7 @@
 *.log
 
 build.config.json
+
+# test runner: keep the vendored factorio-test mod, ignore local test data
+!docker/factorio-test_*.zip
+.factorio-test-data/
