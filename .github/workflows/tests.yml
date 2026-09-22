@@ -3,12 +3,34 @@ name: tests
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      factorio_version:
+        description: Factorio headless version to test against
+        default: "2.1.20"
+
+permissions:
+  contents: read
+
+env:
+  FACTORIO_VERSION: ${{ inputs.factorio_version || '2.1.20' }}
+  FACTORIO_TEST_CLI_VERSION: "3.6.0"
+  MOD_DIR: ./src
 
 jobs:
   factorio-test:
+    name: FactorioTest (Factorio ${{ inputs.factorio_version || '2.1.20' }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check vendored factorio-test mod
+        run: |
+          if ! ls docker/factorio-test_*.zip >/dev/null 2>&1; then
+            echo "::error file=docker/Dockerfile,title=factorio-test mod missing::Commit docker/factorio-test_<version>.zip (run-tests.ps1 downloads it locally)"
+            exit 1
+          fi
 
       - uses: docker/setup-buildx-action@v3
 
@@ -16,10 +38,44 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: docker
-          tags: factorio-mod-tests:2.1.20
+          tags: factorio-mod-tests:${{ env.FACTORIO_VERSION }}
+          build-args: |
+            FACTORIO_VERSION=${{ env.FACTORIO_VERSION }}
+            FACTORIO_TEST_CLI_VERSION=${{ env.FACTORIO_TEST_CLI_VERSION }}
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run in-game tests
-        run: docker compose run --rm -T tests
+        id: tests
+        run: |
+          mkdir -p test-results
+          set +e
+          docker compose run --rm -T -v "$PWD/test-results:/results" tests \
+            --tag-blacklist needs-player \
+            --output-file /results/test-results.json \
+            2>&1 | tee test-results/output.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Test summary
+        if: always() && steps.tests.outcome != 'skipped'
+        run: >
+          python3 .github/scripts/test_summary.py
+          test-results/test-results.json
+          test-results/output.log
+          src
+          "${{ steps.tests.outputs.exit_code || 1 }}"
+
+      - name: Upload test results
+        if: always() && steps.tests.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-factorio-${{ env.FACTORIO_VERSION }}
+          path: test-results/
+          if-no-files-found: ignore
+
+      - name: Fail if tests failed
+        if: steps.tests.outputs.exit_code != '0'
+        run: |
+          echo "Tests failed (exit code ${{ steps.tests.outputs.exit_code }}), see the job summary."
+          exit 1
