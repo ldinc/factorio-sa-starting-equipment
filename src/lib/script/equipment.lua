@@ -41,11 +41,13 @@ function ldinc_starting_equipment.fn.remove_from_queue(player_index)
 end
 
 function ldinc_starting_equipment.fn.game_tick()
-	if #storage.ldinc.starting_equipment.queue == 0 then
+	local queue = storage.ldinc.starting_equipment.queue
+
+	if next(queue) == nil then
 		return
 	end
 
-	for player_index, _ in pairs(storage.ldinc.starting_equipment.queue) do
+	for player_index in pairs(queue) do
 		ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 	end
 end
@@ -96,8 +98,25 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 	end
 
 
-	for _, item in ipairs(items) do
+	for _, raw_item in ipairs(items) do
+		local item = ldinc_starting_equipment.fn.normalize_item(raw_item)
+
 		if not item then
+			log("Invalid starting equipment entry '" .. ldinc_starting_equipment.fn.describe_item(raw_item) .. "' was ignored")
+
+			goto continue
+		end
+
+		if not prototypes.item[item.name] then
+			log("Unknown item '" .. item.name .. "' was ignored as starting equipment")
+
+			goto continue
+		end
+
+		if item.quality and not prototypes.quality[item.quality] then
+			log("Unknown quality '" ..
+				tostring(item.quality) .. "' for item '" .. item.name .. "' was ignored as starting equipment")
+
 			goto continue
 		end
 
@@ -106,13 +125,7 @@ function ldinc_starting_equipment.fn.check_starting_equipment(player_index)
 		end)
 
 		if not success then
-			local err_string = "invalid item key"
-
-			if type(err) == "string" then
-				err_string = err
-			end
-
-			log("Invalid item '" .. item.name .. "' was ignored to add as starting equipment with error: " .. err_string)
+			log("Item '" .. item.name .. "' was ignored as starting equipment with error: " .. tostring(err))
 		end
 
 		::continue::
