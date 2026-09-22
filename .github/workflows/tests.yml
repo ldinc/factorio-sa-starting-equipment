@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  factorio-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build test image (cached between runs)
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          tags: factorio-mod-tests:2.1.20
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run in-game tests
+        run: docker compose run --rm -T tests
