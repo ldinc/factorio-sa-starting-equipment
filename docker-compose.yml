@@ -1,8 +1,10 @@
-# In-game tests for freeplay_starting_equipment, run in headless Factorio.
-#   docker compose build
-#   docker compose run --rm tests                                  # all headless tests
-#   docker compose run --rm tests --tag-blacklist needs-player --bail   # custom CLI flags
-#   docker compose run --rm tests --tag-blacklist needs-player -- "give_items"   # filter by name
+# In-game tests and Lua linting for the mod in ./src (run-tests.ps1 wraps all of this).
+#   docker compose run --rm lint                                        # luacheck src (.luacheckrc)
+#   docker compose run --rm typecheck                                   # Factorio API type check of src
+#   docker compose build tests
+#   docker compose run --rm tests                                       # headless tests
+#   docker compose run --rm tests give_items --tag-blacklist needs-player --bail
+#     (name filters first: --tag-blacklist takes several values)
 # Versions can be overridden with env vars or a .env file next to this file.
 name: freeplay-starting-equipment-tests
 
@@ -24,3 +26,30 @@ services:
         target: /mod
         bind:
           create_host_path: false
+
+  # Lua linting (config: .luacheckrc). docker compose run --rm lint [luacheck args]
+  lint:
+    image: ghcr.io/lunarmodules/luacheck:v1.2.0
+    volumes:
+      - type: bind
+        source: .
+        target: /data
+        read_only: true
+    command: ["src"]
+
+  # Type check against the Factorio API (LuaPlayer, defines, events...). docker compose run --rm typecheck [dir]
+  typecheck:
+    build:
+      context: ./docker
+      dockerfile: typecheck.Dockerfile
+      args:
+        FACTORIO_VERSION: ${FACTORIO_VERSION:-2.1.20}
+        LUALS_VERSION: ${LUALS_VERSION:-3.19.1}
+    image: factorio-mod-typecheck:${FACTORIO_VERSION:-2.1.20}
+    platform: linux/amd64
+    volumes:
+      - type: bind
+        source: .
+        target: /data
+        read_only: true
+    command: ["src"]

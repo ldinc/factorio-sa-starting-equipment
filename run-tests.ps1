@@ -12,6 +12,14 @@
     With a player in the game, every test runs, including "needs-player". Your normal Factorio
     profile, saves and mods are not touched. No Node.js needed.
 
+    Both modes first lint the mod:
+      - luacheck (config: .luacheckrc): undefined/misspelled globals, unused variables, ...
+        Uses luacheck.exe if it is on PATH, otherwise the luacheck Docker image.
+      - typecheck (Docker): Lua Language Server against the Factorio API of -FactorioVersion,
+        catches typos like player.get_main_inventry, defines.events.on_player_joind_game.
+    Tests still run when lint finds issues, but the final result is a failure.
+    -LintOnly only lints, -NoLint skips it.
+
     Both modes need the factorio-test mod zip. If docker\factorio-test_*.zip is missing, the script
     downloads it from the mod portal using the login the game saved in
     %APPDATA%\Factorio\player-data.json.
@@ -21,7 +29,9 @@
 .EXAMPLE
     .\run-tests.ps1
 .EXAMPLE
-    .\run-tests.ps1 -Filter give_items -Bail
+    .\run-tests.ps1 -LintOnly
+.EXAMPLE
+    .\run-tests.ps1 -Filter give_items -Bail -NoLint
 .EXAMPLE
     .\run-tests.ps1 -Graphics
 .EXAMPLE
@@ -38,6 +48,10 @@
 param(
     # Start your installed Factorio with a test profile instead of Docker (runs needs-player tests too).
     [switch]$Graphics,
+    # Only run luacheck, no tests.
+    [switch]$LintOnly,
+    # Skip luacheck.
+    [switch]$NoLint,
     # Rebuild the Docker image from scratch (normally it is rebuilt from cache on every run).
     [switch]$Rebuild,
     # Stop after the first failing test.
@@ -154,11 +168,94 @@ function Get-TestArgs([bool]$SkipPlayerTests) {
     return $list.ToArray()
 }
 
+function Test-DockerRunning {
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { return $false }
+    return (Invoke-Native { docker info *> $null }) -eq 0
+}
+
+# Returns luacheck's exit code (0 = clean, 1 = warnings, 2 = errors, 3+ = luacheck failed).
+function Invoke-Luacheck {
+    $target = $ModDir -replace "\\", "/"
+    Push-Location $Root
+    try {
+        if (Get-Command luacheck -ErrorAction SilentlyContinue) {
+            Write-Step "Linting $ModDir with luacheck"
+            $code = Invoke-Native { luacheck $target }
+        }
+        elseif ([System.IO.Path]::IsPathRooted($ModDir)) {
+            Write-Host "    luacheck skipped: -ModDir outside the repo needs luacheck.exe on PATH" -ForegroundColor Yellow
+            return 0
+        }
+        elseif (Test-DockerRunning) {
+            Write-Step "Linting $ModDir with luacheck (Docker)"
+            $code = Invoke-Native { docker compose run --rm -T lint $target }
+        }
+        else {
+            Write-Host "    luacheck skipped: put luacheck.exe on PATH or start Docker Desktop" -ForegroundColor Yellow
+            return 0
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    if ($code -eq 0) {
+        Write-Host "    luacheck: no issues" -ForegroundColor Green
+    }
+    else {
+        Write-Host "    luacheck: issues found (exit code $code)" -ForegroundColor Yellow
+    }
+    return $code
+}
+
+# Returns 0 = no problems, 1 = problems found, other = typecheck could not run.
+function Invoke-TypeCheck {
+    if ([System.IO.Path]::IsPathRooted($ModDir)) {
+        Write-Host "    typecheck skipped: -ModDir outside the repo" -ForegroundColor Yellow
+        return 0
+    }
+    if (-not (Test-DockerRunning)) {
+        Write-Host "    typecheck skipped: start Docker Desktop to type-check against the Factorio API" -ForegroundColor Yellow
+        return 0
+    }
+
+    Push-Location $Root
+    try {
+        Write-Step "Type-checking $ModDir against the Factorio $FactorioVersion API"
+        $buildArgs = @("compose", "build", "typecheck")
+        if ($Rebuild) { $buildArgs += "--no-cache" }
+        if ((Invoke-Native { docker @buildArgs }) -ne 0) {
+            Write-Host "    typecheck image build failed (see above)" -ForegroundColor Red
+            return 3
+        }
+        $target = $ModDir -replace "\\", "/"
+        $code = Invoke-Native { docker compose run --rm -T typecheck $target }
+    }
+    finally {
+        Pop-Location
+    }
+
+    if ($code -eq 0) {
+        Write-Host "    typecheck: no problems" -ForegroundColor Green
+    }
+    else {
+        Write-Host "    typecheck: problems found (exit code $code)" -ForegroundColor Yellow
+    }
+    return $code
+}
+
+function Invoke-Lint {
+    $luacheckCode = Invoke-Luacheck
+    $typecheckCode = Invoke-TypeCheck
+    if ($luacheckCode -ne 0) { return $luacheckCode }
+    return $typecheckCode
+}
+
 function Invoke-DockerTests {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
         Stop-WithError "docker not found. Install Docker Desktop (https://www.docker.com/products/docker-desktop/) or use -Graphics."
     }
-    if ((Invoke-Native { docker info *> $null }) -ne 0) {
+    if (-not (Test-DockerRunning)) {
         Stop-WithError "Docker is not running. Start Docker Desktop and try again."
     }
 
@@ -171,8 +268,6 @@ function Invoke-DockerTests {
     else {
         $env:MOD_DIR = "./" + ($ModDir -replace "\\", "/")
     }
-    $env:FACTORIO_VERSION = $FactorioVersion
-    $env:FACTORIO_TEST_CLI_VERSION = $CliVersion
 
     Push-Location $Root
     try {
@@ -314,17 +409,42 @@ if (-not (Test-Path (Join-Path $ModPath "info.json"))) {
     Stop-WithError "No info.json in $ModPath (use -ModDir to point at the mod folder)"
 }
 
+if ($LintOnly -and $NoLint) {
+    Stop-WithError "-LintOnly and -NoLint cannot be combined."
+}
+
+$env:FACTORIO_VERSION = $FactorioVersion
+$env:FACTORIO_TEST_CLI_VERSION = $CliVersion
+
+$lintCode = 0
+if (-not $NoLint) {
+    $lintCode = Invoke-Lint
+}
+if ($LintOnly) {
+    exit $lintCode
+}
+
 if ($Graphics) {
     Invoke-GraphicsTests
+    if ($lintCode -ne 0) {
+        Write-Host "Note: lint found issues (see above)." -ForegroundColor Yellow
+        exit $lintCode
+    }
     exit $script:ExitCode
 }
 
 Invoke-DockerTests
 
-if ($script:ExitCode -eq 0) {
-    Write-Host "Tests passed." -ForegroundColor Green
+if ($script:ExitCode -eq 0 -and $lintCode -eq 0) {
+    Write-Host "Lint clean, tests passed." -ForegroundColor Green
+    exit 0
 }
-else {
-    Write-Host "Tests failed (exit code $($script:ExitCode))." -ForegroundColor Red
+if ($script:ExitCode -eq 0) {
+    Write-Host "Tests passed, but lint found issues (see luacheck/typecheck output above)." -ForegroundColor Red
+    exit 1
+}
+Write-Host "Tests failed (exit code $($script:ExitCode))." -ForegroundColor Red
+if ($lintCode -ne 0) {
+    Write-Host "Lint found issues too (see luacheck/typecheck output above)." -ForegroundColor Red
 }
 exit $script:ExitCode

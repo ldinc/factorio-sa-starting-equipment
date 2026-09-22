@@ -50,7 +50,7 @@ describe("with a real player", function()
 	end)
 
 	test("items registered by other mods are given", function()
-		remote.call(h.INTERFACE, "add_by_string", "test_mod", "stone=4")
+		remote.call("ldinc_starting_equipment", "add_by_string", "test_mod", "stone=4")
 
 		fn.add_to_queue(1)
 		fn.game_tick()
